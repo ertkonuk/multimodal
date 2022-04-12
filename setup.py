@@ -39,7 +39,7 @@ DESCRIPTION = "Multimodal modeling in PyTorch"
 LONG_DESCRIPTION = fetch_long_description()
 LONG_DESCRIPTION_CONTENT_TYPE = "text/markdown"
 AUTHOR = "PyTorch Multimodal"
-AUTHOR_EMAIL = "tkonuk@nvidia.com"
+AUTHOR_EMAIL = "kartikayk@fb.com"
 # Need to exclude folders in test as well so as they don't create an extra package
 EXCLUDES = ("examples", "test")
 
