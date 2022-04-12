@@ -14,6 +14,7 @@ from torchmultimodal.models.flava import (
 )
 from transformers.optimization import get_cosine_schedule_with_warmup
 
+import os
 
 def get_optimizers_for_lightning(
     model: torch.nn.Module,
@@ -98,6 +99,7 @@ class FLAVALightningModule(LightningModule):
             itm_labels=batch.get("itm_labels", None),
             required_embedding=required_embedding,
         )
+        os.system('nvidia-smi')
         return output
 
     def configure_optimizers(self):

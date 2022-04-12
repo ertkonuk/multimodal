@@ -11,27 +11,41 @@ from data import (
     MultiDataModule,
     VLDataModule,
 )
-from examples.flava.callbacks.multimodal_eval import MultimodalEvalCallback
+#from examples.flava.callbacks.multimodal_eval import MultimodalEvalCallback
+from callbacks.multimodal_eval import MultimodalEvalCallback
 from model import FLAVALightningModule
 from pytorch_lightning import Trainer, seed_everything
 from pytorch_lightning.callbacks import LearningRateMonitor
 
 
-AVAIL_GPUS = 2
+AVAIL_GPUS = 4
 SEED = -1
 
-IMAGENET_TRAIN_ROOT = ""
-IMAGENET_VAL_ROOT = ""
+IMAGENET_TRAIN_ROOT = "/datasets/imagenet-raw/raw-data/val"
+IMAGENET_VAL_ROOT =  "/datasets/imagenet-raw/raw-data/val"
 NUM_WORKERS = 4
 MAX_STEPS = 450000
 BATCH_SIZE = 8
 ALLOW_UNEVEN_BATCHES = False
 
 
+# added by tugrulkonuk
+# Change the download folder and the cache_dir for huggingface datasets package to
+# avoid downloading to the home folder (default)
+import datasets
+from pathlib import Path
+datasets.config.DOWNLOADED_DATASETS_PATH = Path('/datasets/tkonuk')
+datasets.config.HF_DATASETS_CACHE = Path('/datasets/tkonuk')
+print('-'* 100)
+print(datasets.config.DOWNLOADED_DATASETS_PATH)
+print(datasets.config.HF_DATASETS_CACHE)
+print('-'* 100)
+
+
 def main():
     if SEED != -1:
         seed_everything(SEED, workers=True)
-
+    
     imagenet_datamodule = ImageDataModule(
         train_root=IMAGENET_TRAIN_ROOT,
         val_root=IMAGENET_VAL_ROOT,
@@ -39,12 +53,14 @@ def main():
         num_workers=NUM_WORKERS,
         allow_unenven_batchs=ALLOW_UNEVEN_BATCHES,
     )
+
     mlm_datamodule = MLMDataModule(
         [HFDatasetInfo("wikitext", "wikitext-103-raw-v1")],
         batch_size=BATCH_SIZE,
         num_workers=NUM_WORKERS,
         allow_unenven_batchs=ALLOW_UNEVEN_BATCHES,
     )
+
     vl_datamodule = MultiDataModule(
         [
             VLDataModule(
@@ -69,6 +85,7 @@ def main():
             )
         ]
     )
+
     datamodule = MultiDataModule([imagenet_datamodule, mlm_datamodule, vl_datamodule])
 
     datamodule.setup("fit")
@@ -84,6 +101,11 @@ def main():
         ],
         strategy="ddp",
     )
+    
+    print('-'* 100)
+    print('Training started')
+    print('-'* 100)
+    
     trainer.fit(model, datamodule=datamodule)
     trainer.validate(model, datamodule=datamodule)
 
