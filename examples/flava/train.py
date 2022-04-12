@@ -21,8 +21,10 @@ from pytorch_lightning.callbacks import LearningRateMonitor
 AVAIL_GPUS = 4
 SEED = -1
 
+# ImageNet must be on the disk.
 IMAGENET_TRAIN_ROOT = "/datasets/imagenet-raw/raw-data/val"
-IMAGENET_VAL_ROOT =  "/datasets/imagenet-raw/raw-data/val"
+IMAGENET_VAL_ROOT   = "/datasets/imagenet-raw/raw-data/val"
+
 NUM_WORKERS = 4
 MAX_STEPS = 450000
 BATCH_SIZE = 8
