@@ -114,6 +114,7 @@ class MultiDataLoader:
             return
 
         choice = [self.sampling_func()]
+
         if torch.distributed.is_available() and torch.distributed.is_initialized():
             # This broadcast is probably unnecessary with lightning if everything
             # is already properly seeded. But,to be on safe side, we can still
@@ -160,16 +161,22 @@ class MultiDataModule(LightningDataModule):
             datamodule.prepare_data()
 
     def train_dataloader(self) -> MultiDataLoader:
-        self.train_dataloader = self._build_multi_dataloader("train")
-        return self.train_dataloader
+        #self.train_dataloader = self._build_multi_dataloader("train")
+        #return self.train_dataloader
+        # added by tugrulkonuk
+        return self._build_multi_dataloader("train")
 
     def val_dataloader(self) -> MultiDataLoader:
-        self.val_dataloader = self._build_multi_dataloader("val")
-        return self.val_dataloader
+        #self.val_dataloader = self._build_multi_dataloader("val")
+        #return self.val_dataloader
+        # added by tugrulkonuk
+        return self._build_multi_dataloader("val")
 
     def test_dataloader(self) -> MultiDataLoader:
-        self.test_dataloader = self._build_multi_dataloader("test")
-        return self.test_dataloader
+        #self.test_dataloader = self._build_multi_dataloader("test")
+        #return self.test_dataloader
+        # added by tugrulkonuk
+        return self._build_multi_dataloader("test")
 
     def _build_multi_dataloader(self, split="train"):
         dataloaders = []
@@ -180,6 +187,7 @@ class MultiDataModule(LightningDataModule):
 
     def on_before_batch_transfer(self, batch, *args):
         batch, index = batch["batch"], batch["datamodule_index"]
+
         self.current_datamodule_idx = index
         return self.datamodules[self.current_datamodule_idx].on_before_batch_transfer(
             batch, *args

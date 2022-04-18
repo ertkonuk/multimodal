@@ -3,6 +3,7 @@
 #
 # This source code is licensed under the BSD-style license found in the
 # LICENSE file in the root directory of this source tree.
+import torch
 
 from data import (
     HFDatasetInfo,
@@ -18,31 +19,42 @@ from pytorch_lightning import Trainer, seed_everything
 from pytorch_lightning.callbacks import LearningRateMonitor
 
 
-AVAIL_GPUS = 4
+AVAIL_GPUS = 8
 SEED = -1
 
 # ImageNet must be on the disk.
 IMAGENET_TRAIN_ROOT = "/datasets/imagenet-raw/raw-data/val"
 IMAGENET_VAL_ROOT   = "/datasets/imagenet-raw/raw-data/val"
 
-NUM_WORKERS = 4
+NUM_WORKERS = 16
 MAX_STEPS = 450000
 BATCH_SIZE = 8
 ALLOW_UNEVEN_BATCHES = False
 
-
 # added by tugrulkonuk
 # Change the download folder and the cache_dir for huggingface datasets package to
 # avoid downloading to the home folder (default)
-import datasets
+import datasets, sys
 from pathlib import Path
+# Set recursion limit
+#sys.setrecursionlimit(9999)
+
+# Set the cache dir for huggingface dataset
 datasets.config.DOWNLOADED_DATASETS_PATH = Path('/datasets/tkonuk')
 datasets.config.HF_DATASETS_CACHE = Path('/datasets/tkonuk')
+# Set the cache dir for pytorch: SET TO THI A MORE APPROPRIATE DIRECTORY
+torch.hub.set_dir(Path('/datasets/tkonuk'))
 print('-'* 100)
-print(datasets.config.DOWNLOADED_DATASETS_PATH)
-print(datasets.config.HF_DATASETS_CACHE)
+print('dataset downloaddir ', datasets.config.DOWNLOADED_DATASETS_PATH)
+print('dataset cachedir', datasets.config.HF_DATASETS_CACHE)
+print('torch hubdir: ',torch.hub.get_dir())
 print('-'* 100)
 
+# Number of threads for data downloading
+NUM_PROC = 32
+vl_kwargs={'num_proc': NUM_PROC}
+
+NUM_SANITY_VAL_STEPS = 0
 
 def main():
     if SEED != -1:
@@ -69,14 +81,14 @@ def main():
                 train_dataset_infos=[
                     HFDatasetInfo(
                         key="red_caps",
-                        subset="mycology",
+                        subset="cupcakes",
                         rename_columns=[("caption", "text")],
                     )
                 ],
                 val_dataset_infos=[
                     HFDatasetInfo(
                         key="red_caps",
-                        subset="mycology",
+                        subset="cupcakes",
                         rename_columns=[("caption", "text")],
                         split_key_mapping={"validation": "train"},
                     )
@@ -89,11 +101,13 @@ def main():
     )
 
     datamodule = MultiDataModule([imagenet_datamodule, mlm_datamodule, vl_datamodule])
-
+    
     datamodule.setup("fit")
+    
     model = FLAVALightningModule()
-
+    
     trainer = Trainer(
+        num_sanity_val_steps=NUM_SANITY_VAL_STEPS,
         max_steps=MAX_STEPS,
         gpus=AVAIL_GPUS,
         progress_bar_refresh_rate=50,
@@ -103,11 +117,7 @@ def main():
         ],
         strategy="ddp",
     )
-    
-    print('-'* 100)
-    print('Training started')
-    print('-'* 100)
-    
+           
     trainer.fit(model, datamodule=datamodule)
     trainer.validate(model, datamodule=datamodule)
 

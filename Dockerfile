@@ -40,7 +40,11 @@ RUN pip3 install -r requirements.txt & pip3 install -r examples/flava/requiremen
 
 RUN sudo python3 setup.py install
 
+
+WORKDIR /home/ubuntu/app/examples/flava
+
+ENTRYPOINT ["/bin/bash"]
 # build with
 # docker build --network=host -t multimodal:training .
 # run with 
-
+# docker run -v /datasets:/datasets -ti multimodal:training 

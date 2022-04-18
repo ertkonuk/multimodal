@@ -167,7 +167,9 @@ class TextDataModule(LightningDataModule):
         return self._build_dataloader(self.train_dataset)
 
     def val_dataloader(self):
-        return self._build_dataloader(self.val_dataset, shuffle=False)
+        #return self._build_dataloader(self.val_dataset, shuffle=False)
+        return self._build_dataloader(self.val_dataset)
+        #return self._build_val_dataloader(self.val_dataset)
 
     def _build_dataloader(self, dataset, drop_last=False, shuffle=True):
         return torch.utils.data.DataLoader(
@@ -178,6 +180,19 @@ class TextDataModule(LightningDataModule):
             shuffle=shuffle,
             collate_fn=self._build_collator(),
             drop_last=drop_last,
+        )
+
+    # added by tugrulkonuk
+    # _build_dataloader throws a strange error when shuffle=False, use this for now
+    def _build_val_dataloader(self, dataset):
+        return torch.utils.data.DataLoader(
+            dataset,
+            batch_size=self.batch_size,
+            num_workers=self.num_workers,
+            sampler=None,
+            shuffle=False,
+            collate_fn=self._build_collator(),
+            drop_last=False,
         )
 
     def _build_collator(self):
@@ -207,13 +222,28 @@ class MLMDataModule(TextDataModule):
         self.mlm_probability = mlm_probability
         self.ignore_index = ignore_index
 
+    # added by tugrulkonuk
+    def build_dataloader(self, dataset, drop_last=False, shuffle=True):
+        return torch.utils.data.DataLoader(
+            dataset,
+            batch_size=self.batch_size,
+            num_workers=self.num_workers,
+            sampler=None,
+            shuffle=shuffle,
+            collate_fn=self._build_collator(),
+            drop_last=drop_last,
+        )
+
     def _build_dataloader(self, dataset, drop_last=True):
         # uneven batches can cause distributed issues,
         # drop last batch to prevent those.
         # ideally, we don't need to drop these for unimodal cases
         # but just to be safe
-        return self._build_dataloader(dataset, drop_last=drop_last)
+        #return self._build_dataloader(dataset, drop_last=drop_last)
+        # added by tugrulkonuk
+        return self.build_dataloader(dataset, drop_last=drop_last)
 
+    
     def _build_collator(self):
         return DataCollatorForLanguageModeling(
             self.tokenizer, mlm_probability=self.mlm_probability
@@ -258,11 +288,18 @@ class VLDataModule(LightningDataModule):
         self.itm_probability = itm_probability
         self.allow_uneven_batches = allow_uneven_batches
 
+        # added by tugrulkonuk
+        self.num_proc = kwargs.get('num_proc', 16)
+        
     def setup(self, stage=None):
         if self.text_transform is None:
-            text_tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
+            #text_tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
+            # added by tugrulkonuk
+            self.text_tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
             self.text_transform = default_text_transform(
-                text_tokenizer, max_text_length=VL_MAX_LENGTH_DEFAULT
+                #text_tokenizer, max_text_length=VL_MAX_LENGTH_DEFAULT
+                # added by tugrulkonuk
+                self.text_tokenizer, max_text_length=VL_MAX_LENGTH_DEFAULT
             )
 
         train_vl_transform = VLTransform(
@@ -276,7 +313,7 @@ class VLDataModule(LightningDataModule):
             self.train_dataset_infos, split="train"
         )
         train_dataset = train_dataset.map(
-            fetch_images, fn_kwargs={"timeout": timeout}, num_proc=80
+            fetch_images, fn_kwargs={"timeout": timeout}, num_proc=self.num_proc
         )
         train_dataset = train_dataset.filter(
             lambda example: example["image_url"] != "empty"
@@ -294,7 +331,7 @@ class VLDataModule(LightningDataModule):
             self.val_dataset_infos, split="validation"
         )
         val_dataset = val_dataset.map(
-            fetch_images, fn_kwargs={"timeout": timeout}, num_proc=80
+            fetch_images, fn_kwargs={"timeout": timeout}, num_proc=self.num_proc
         )
         val_dataset = val_dataset.filter(
             lambda example: example["image_url"] != "empty"
@@ -342,8 +379,15 @@ class VLDataModule(LightningDataModule):
     def on_before_batch_transfer(self, batch, *args):
         batch.pop("token_type_ids", None)
         mask = batch.pop("attention_mask", None)
-        if mask.size(0) < self.batch_size and not self.allow_uneven_batches:
-            batch = pad_batch(batch, self.batch_size)
+
+        #if mask.size(0) < self.batch_size and not self.allow_uneven_batches:
+        #if mask.size(0) < self.batch_size and not self.allow_uneven_batches:
+        #    batch = pad_batch(batch, self.batch_size)        
+        # added by tugrulkonuk
+        if mask is not None:           
+            if mask.size(0) < self.batch_size and not self.allow_uneven_batches:
+                batch = pad_batch(batch, self.batch_size)
+
         return batch
 
     def on_after_batch_transfer(self, batch, *args):

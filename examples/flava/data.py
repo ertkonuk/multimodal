@@ -468,6 +468,12 @@ class VLDataModule(LightningDataModule):
         self.itm_probability = itm_probability
         self.allow_uneven_batches = allow_uneven_batches
 
+        # added by tugrulkonuk
+        self.num_proc = kwargs.get('num_proc', 8)
+        print('-'* 100)
+        print('SELF.NUM_PROC: ',self.num_proc)
+        print('-'* 100)
+
     def setup(self, stage=None):
         if self.text_tokenizer is None:
             self.text_tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
@@ -483,7 +489,7 @@ class VLDataModule(LightningDataModule):
             self.train_dataset_infos, split="train"
         ).shard(600, 0)
         train_dataset = train_dataset.map(
-            fetch_images, fn_kwargs={"timeout": timeout}, num_proc=80
+            fetch_images, fn_kwargs={"timeout": timeout}, num_proc=self.num_proc
         )
         train_dataset = train_dataset.filter(
             lambda example: example["image_url"] != "empty"
@@ -501,7 +507,7 @@ class VLDataModule(LightningDataModule):
             self.val_dataset_infos, split="validation"
         ).shard(600, 0)
         val_dataset = val_dataset.map(
-            fetch_images, fn_kwargs={"timeout": timeout}, num_proc=80
+            fetch_images, fn_kwargs={"timeout": timeout}, num_proc=self.num_proc
         )
         val_dataset = val_dataset.filter(
             lambda example: example["image_url"] != "empty"

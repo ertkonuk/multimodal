@@ -57,7 +57,18 @@ class FLAVALightningModule(LightningModule):
 
     def training_step(self, batch, batch_idx):
         output = self._step(batch, batch_idx)
-        losses = asdict(output.losses)
+
+        #losses = asdict(output.losses)        
+        # added by tugrulkonuk: TODO: put this into a function
+        losses = {
+                    'mmm_text_loss' : output.losses.mmm_text_loss,
+                    'mmm_image_loss' : output.losses.mmm_image_loss,
+                    'mim_loss' : output.losses.mim_loss,
+                    'mlm_loss' : output.losses.mlm_loss,
+                    'itm_loss' : output.losses.itm_loss,
+                    'global_contrastive_loss' : output.losses.global_contrastive_loss
+                 }
+        
         total_loss = 0
         for key in losses:
             if losses[key] is not None:
@@ -99,7 +110,7 @@ class FLAVALightningModule(LightningModule):
             itm_labels=batch.get("itm_labels", None),
             required_embedding=required_embedding,
         )
-        os.system('nvidia-smi')
+        
         return output
 
     def configure_optimizers(self):
