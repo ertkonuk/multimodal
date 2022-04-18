@@ -19,7 +19,7 @@ from pytorch_lightning import Trainer, seed_everything
 from pytorch_lightning.callbacks import LearningRateMonitor
 
 
-AVAIL_GPUS = 8
+AVAIL_GPUS = -1
 SEED = -1
 
 # ImageNet must be on the disk.
@@ -27,17 +27,16 @@ IMAGENET_TRAIN_ROOT = "/datasets/imagenet-raw/raw-data/val"
 IMAGENET_VAL_ROOT   = "/datasets/imagenet-raw/raw-data/val"
 
 NUM_WORKERS = 16
-MAX_STEPS = 450000
-BATCH_SIZE = 8
+MAX_STEPS = 4500 #450000
+BATCH_SIZE = 32
 ALLOW_UNEVEN_BATCHES = False
+PRECISION = 16
 
 # added by tugrulkonuk
 # Change the download folder and the cache_dir for huggingface datasets package to
 # avoid downloading to the home folder (default)
 import datasets, sys
 from pathlib import Path
-# Set recursion limit
-#sys.setrecursionlimit(9999)
 
 # Set the cache dir for huggingface dataset
 datasets.config.DOWNLOADED_DATASETS_PATH = Path('/datasets/tkonuk')
@@ -55,6 +54,11 @@ NUM_PROC = 32
 vl_kwargs={'num_proc': NUM_PROC}
 
 NUM_SANITY_VAL_STEPS = 0
+PARALLEL_STRATEGY = "ddp"
+
+import logging
+logging.getLogger("lightning").addHandler(logging.NullHandler())
+logging.getLogger("lightning").propagate = False
 
 def main():
     if SEED != -1:
@@ -115,7 +119,7 @@ def main():
             LearningRateMonitor(logging_interval="step"),
             MultimodalEvalCallback(imagenet_datamodule=imagenet_datamodule),
         ],
-        strategy="ddp",
+        strategy=PARALLEL_STRATEGY,
     )
            
     trainer.fit(model, datamodule=datamodule)

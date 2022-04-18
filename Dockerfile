@@ -29,8 +29,10 @@ RUN pip3 install \
     numpy pandas matplotlib \
     # PyTorch and torchvision
     torch torchvision torchtext --extra-index-url https://download.pytorch.org/whl/cu113 \
-    # HuggingFace transformers
-    transformers 2>&1
+    # FairScale for fully sharded parallel training
+    fairscale \
+    # HuggingFace datasets and transformers
+    datasets transformers 2>&1
 
 
 WORKDIR /home/ubuntu/app
