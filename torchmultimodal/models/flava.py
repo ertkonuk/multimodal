@@ -197,7 +197,6 @@ class FLAVAForClassificationOutput:
     logits: Tensor
     loss: Tensor
 
-
 class FLAVAModel(nn.Module, PretrainedMixin):
     def __init__(
         self,
@@ -266,7 +265,7 @@ class FLAVAModel(nn.Module, PretrainedMixin):
             multimodal_masked_outputs = self.encode_mm(
                 image_masked_outputs.last_hidden_state,
                 text_masked_outputs.last_hidden_state,
-            )
+            )            
 
         return FLAVAOutput(
             image=image_outputs,

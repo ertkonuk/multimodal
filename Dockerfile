@@ -46,7 +46,14 @@ RUN sudo python3 setup.py install
 WORKDIR /home/ubuntu/app/examples/flava
 
 ENTRYPOINT ["/bin/bash"]
+
 # build with
-# docker build --network=host -t multimodal:training .
+#   docker build --network=host -t multimodal:training .
 # run with 
-# docker run -v /datasets:/datasets -ti multimodal:training 
+#   docker run --gpus all \
+#                -v /datasets:/datasets \
+#               -v /tmp/multimodal:/tmp/mm \
+#               -e TRANSFORMERS_CACHE=/tmp/multimodal \
+#              --network=host -ti multimodal:training 
+# enjoy with
+#   a glass of single-malt whiskey and Belgian chocolate

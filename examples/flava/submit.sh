@@ -3,7 +3,6 @@
 # SLURM SUBMIT SCRIPT
 #SBATCH --partition=hsw_v100_32g
 #SBATCH --nodes=1
-#SBATCH --gres=gpu:4
 #SBATCH --ntasks-per-node=4
 #SBATCH --cpus-per-task=32
 #SBATCH --mem=0
