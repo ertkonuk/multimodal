@@ -51,7 +51,7 @@ datasets.config.HF_DATASETS_CACHE = Path('/datasets/tkonuk')
 
 # Set the cache dir for pytorch: SET TO THI A MORE APPROPRIATE DIRECTORY
 #torch.hub.set_dir(Path('/datasets/tkonuk'))
-torch.hub.set_dir(Path('/tmp/multimodal'))
+torch.hub.set_dir(Path('/tmp/mm'))
 
 print('-'* 100)
 print('transformers cachedir: ', os.environ['TRANSFORMERS_CACHE'])
