@@ -54,7 +54,7 @@ datasets.config.HF_DATASETS_CACHE = Path('/datasets/tkonuk')
 torch.hub.set_dir(Path('/tmp/mm'))
 
 print('-'* 100)
-print('transformers cachedir: ', os.environ['TRANSFORMERS_CACHE'])
+#print('transformers cachedir: ', os.environ['TRANSFORMERS_CACHE'])
 print('dataset downloaddir: ', datasets.config.DOWNLOADED_DATASETS_PATH)
 print('dataset cachedir:', datasets.config.HF_DATASETS_CACHE)
 print('torch hubdir: ',torch.hub.get_dir())
