@@ -61,7 +61,7 @@ class CLIPTextEncoder(nn.Module):
         if use_clip_init:
             self.initialize_parameters()
 
-    def initialize_parameters(self):
+    def initialize_parameters(self) -> None:
         # Initialize token and positional embeddings
         nn.init.normal_(
             self.encoder.token_embedding.weight, std=self.TOKEN_EMBEDDING_INIT_STD
@@ -75,19 +75,23 @@ class CLIPTextEncoder(nn.Module):
         attn_std = self.width ** -0.5
         fc_std = (2 * self.width) ** -0.5
         for layer in self.encoder.layers:
-            nn.init.normal_(layer.attention.input_projection.weight, std=attn_std)
-            nn.init.normal_(layer.attention.output_projection.weight, std=proj_std)
+            nn.init.normal_(
+                layer.better_transformer.self_attn.in_proj_weight, std=attn_std
+            )
+            nn.init.normal_(
+                layer.better_transformer.self_attn.out_proj.weight, std=proj_std
+            )
             # c_fc in CLIP corresponds to the first residual MLP layer
-            nn.init.normal_(layer.residual_mlp.mlp[0].weight, std=fc_std)
+            nn.init.normal_(layer.better_transformer.linear1.weight, std=fc_std)
             # c_proj in CLIP corresponds to the last residual MLP layer
-            nn.init.normal_(layer.residual_mlp.mlp[-2].weight, std=proj_std)
+            nn.init.normal_(layer.better_transformer.linear2.weight, std=proj_std)
 
         # Initialize projection
         nn.init.normal_(self.projection.weight, std=self.width ** -0.5)
 
-    def build_attention_mask(self):
+    def build_attention_mask(self) -> torch.Tensor:
         mask = torch.full((self.context_length, self.context_length), True).triu(1)
-        return mask.to(dtype=bool)
+        return mask.to(device=None, dtype=torch.bool)
 
     def forward(self, text: torch.Tensor) -> torch.Tensor:
         embeddings = self.encoder(text, attn_mask=self.build_attention_mask())
