@@ -7,6 +7,19 @@ TorchMultimodal is a PyTorch library for training state-of-the-art multimodal mu
 
 As a first open source example, researchers will be able to train and extend FLAVA using TorchMultimodal.
 
+## Running from the Docker container
+The easiest way to use the torchmultimodal library is through the Docker container. To do so, first build the image with:
+
+docker build --network=host -t multimodal:training .
+
+And, run the image using:
+
+docker run --gpus all \
+            -v data_directory:data_directory \
+            -v checkpoint_dir:checkpoint_dir \
+            -e TRANSFORMERS_CACHE=huggingface_transformers_cache_dir \
+           --ipc=host --network=host -ti multimodal:training
+
 ## Installation
 
 TorchMultimodal requires Python >= 3.8. The library can be installed with or without CUDA support.
@@ -32,7 +45,7 @@ TorchMultimodal requires Python >= 3.8. The library can be installed with or wit
     cd torchmultimodal
     pip install -r requirements.txt
 
-    python setup.py install
+    pip install -e .
     ```
     For developers please follow the [development installation](https://github.com/facebookresearch/multimodal/blob/main/CONTRIBUTING.md#development-installation).
 
