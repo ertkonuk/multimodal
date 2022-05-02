@@ -14,10 +14,10 @@ docker build --network=host -t multimodal:training .
 
 And, run the image using:
 
-docker run --gpus all \
-            -v data_directory:data_directory \
-            -v checkpoint_dir:checkpoint_dir \
-            -e TRANSFORMERS_CACHE=huggingface_transformers_cache_dir \
+docker run --gpus all 
+            -v data_directory:data_directory 
+            -v checkpoint_dir:checkpoint_dir \            
+            -e TRANSFORMERS_CACHE=huggingface_transformers_cache_dir 
            --ipc=host --network=host -ti multimodal:training
 
 ## Installation
