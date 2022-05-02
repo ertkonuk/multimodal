@@ -1,6 +1,6 @@
 # NVIDIA CUDA image as a base
 #FROM nvidia/cuda:11.6.0-base-ubuntu20.04
-FROM  nvcr.io/nvidia/pytorch:22.04-py3
+FROM  nvcr.io/nvidia/pytorch:22.02-py3
 
 # Remove the old GPG key and set up the new one
 #RUN apt install curl # REQUIRED apt-get update FIRST
@@ -62,8 +62,8 @@ ENTRYPOINT ["/bin/bash"]
 # run with 
 #   docker run --gpus all \
 #                -v /datasets:/datasets \
-#               -v /tmp/multimodal:/tmp/mm \
+#               -v /tmp/mm:/tmp/mm \
 #               -e TRANSFORMERS_CACHE=/tmp/multimodal \
-#              --network=host -ti multimodal:training 
+#              --ipc=host --network=host -ti multimodal:training 
 # enjoy with
 #   a glass of single-malt whiskey and Belgian chocolate

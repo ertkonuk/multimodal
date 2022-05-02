@@ -28,7 +28,7 @@ IMAGENET_VAL_ROOT   = "/datasets/imagenet-raw/raw-data/val"
 
 NUM_WORKERS = 16
 MAX_STEPS = 250 #450000
-BATCH_SIZE = 48
+BATCH_SIZE = 4
 ALLOW_UNEVEN_BATCHES = False
 PRECISION = 16
 
