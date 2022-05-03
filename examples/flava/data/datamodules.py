@@ -372,8 +372,8 @@ class VLDataModule(LightningDataModule):
         )
 
     def _build_collator(self):
-        return DataCollatorForWholeWordMask(
-            self.text_tokenizer, mlm_probability=self.mlm_probability
+        return VLCollator(
+            self.text_tokenizer, mlm_probability=self.mlm_probability,
         )
 
     def on_before_batch_transfer(self, batch, *args):
@@ -399,6 +399,31 @@ class VLDataModule(LightningDataModule):
         batch.update(
             {"mlm_labels": mlm_labels, "text": text, "text_masked": text_masked}
         )
+        return batch
+
+
+class VLCollator:
+    def __init__(self, text_tokenizer, mlm_probability):
+        self.text_tokenizer = text_tokenizer
+        self.mlm_probability = mlm_probability
+        self.language_collator = DataCollatorForWholeWordMask(
+            self.text_tokenizer, mlm_probability=self.mlm_probability
+        )
+        # Use Default Pytorch fn_collator for image processing
+        self.image_collator = torch.utils.data.default_collate
+
+    def __call__(self, features):
+        language_batch = self.language_collator(features)
+        # Delete Language features from features
+        for feature in features:
+            del feature['input_ids']
+            del feature['token_type_ids']
+            del feature['special_tokens_mask']
+            del feature['attention_mask']
+        image_batch = self.image_collator(features)
+        batch = {}
+        batch.update(image_batch)
+        batch.update(language_batch)
         return batch
 
 
