@@ -373,7 +373,7 @@ class VLDataModule(LightningDataModule):
 
     def _build_collator(self):
         return VLCollator(
-            self.text_tokenizer, mlm_probability=self.mlm_probability,
+            self.text_tokenizer, mlm_probability=self.mlm_probability
         )
 
     def on_before_batch_transfer(self, batch, *args):
