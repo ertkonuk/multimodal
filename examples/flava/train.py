@@ -4,7 +4,7 @@
 # This source code is licensed under the BSD-style license found in the
 # LICENSE file in the root directory of this source tree.
 import torch
-
+import datasets
 from data import (
     HFDatasetInfo,
     ImageDataModule,
@@ -12,64 +12,47 @@ from data import (
     MultiDataModule,
     VLDataModule,
 )
-#from examples.flava.callbacks.multimodal_eval import MultimodalEvalCallback
+import logging
 from callbacks.multimodal_eval import MultimodalEvalCallback
 from model import FLAVALightningModule
 from pytorch_lightning import Trainer, seed_everything
 from pytorch_lightning.callbacks import LearningRateMonitor
+import argumentparser
 
+args = argumentparser.get_training_arg_parser().parse_args()
+print('Training Arguments:')
+print('\n'.join(f'{k}={v}' for k, v in vars(args).items()))
 
-AVAIL_GPUS = -1
-SEED = -1
-
+# Dataset Config
 # ImageNet must be on the disk.
-IMAGENET_TRAIN_ROOT = "/datasets/imagenet-raw/raw-data/val"
-IMAGENET_VAL_ROOT   = "/datasets/imagenet-raw/raw-data/val"
-
-NUM_WORKERS = 16
-MAX_STEPS = 250 #450000
-BATCH_SIZE = 4
-ALLOW_UNEVEN_BATCHES = False
-PRECISION = 16
-
-# added by tugrulkonuk
-# Change the download folder and the cache_dir for huggingface datasets package to
-# avoid downloading to the home folder (default)
-import datasets, os
-from pathlib import Path
-
-# No need Path but I am too lazy to fix it
-# Set the checkpoint directory
-CHECKPT_DIR = Path('/tmp/mm')
-
-# Set the cache dir for huggingface transformers
-#os.environ['TRANSFORMERS_CACHE'] = Path('/tmp/multimodal')
-
+IMAGENET_TRAIN_ROOT = args.imagenet_train_root
+IMAGENET_VAL_ROOT   = args.imagenet_val_root
 # Set the cache dir for huggingface dataset
-datasets.config.DOWNLOADED_DATASETS_PATH = Path('/datasets/tkonuk')
-datasets.config.HF_DATASETS_CACHE = Path('/datasets/tkonuk')
+datasets.config.DOWNLOADED_DATASETS_PATH = args.hf_dir
+datasets.config.HF_DATASETS_CACHE = args.hf_dir
+torch.hub.set_dir(args.pyt_dir)
 
-# Set the cache dir for pytorch: SET TO THI A MORE APPROPRIATE DIRECTORY
-#torch.hub.set_dir(Path('/datasets/tkonuk'))
-torch.hub.set_dir(Path('/tmp/mm'))
+AVAIL_GPUS = args.gpus
+SEED = args.seed
+NUM_WORKERS = args.num_workers
+MAX_STEPS = args.max_steps
+BATCH_SIZE = args.batch_size
+ALLOW_UNEVEN_BATCHES = args.allow_uneven_batches
+CHECKPT_DIR = args.save_dir
+NUM_SANITY_VAL_STEPS = args.sanity_steps
+PARALLEL_STRATEGY = args.parallel_strategy
+vl_kwargs={'num_proc': args.num_proc}
+PRECISION = 16 # Not Used
+
+
+logging.getLogger("lightning").addHandler(logging.NullHandler())
+logging.getLogger("lightning").propagate = False
 
 print('-'* 100)
-#print('transformers cachedir: ', os.environ['TRANSFORMERS_CACHE'])
 print('dataset downloaddir: ', datasets.config.DOWNLOADED_DATASETS_PATH)
 print('dataset cachedir:', datasets.config.HF_DATASETS_CACHE)
 print('torch hubdir: ',torch.hub.get_dir())
 print('-'* 100)
-
-# Number of threads for data downloading
-NUM_PROC = 32
-vl_kwargs={'num_proc': NUM_PROC}
-
-NUM_SANITY_VAL_STEPS = 0
-PARALLEL_STRATEGY = "ddp" #"ddp_sharded"
-
-import logging
-logging.getLogger("lightning").addHandler(logging.NullHandler())
-logging.getLogger("lightning").propagate = False
 
 def main():
     if SEED != -1:
