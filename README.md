@@ -15,15 +15,15 @@ docker build --network=host -t multimodal:training .
 And, run the image using:
 
  docker run --gpus all 
-               -v /mnt/nvdl/datasets/:/mnt/nvdl/datasets \
-               -v /mnt/nvdl/usr/aot/experiments/:/checkpoint_dir \
-               -v /mnt/nvdl/usr/aot/codebase:/codebase \
-              -e TRANSFORMERS_CACHE=/tmp/multimodal \
-              -e IMAGENET_TRAIN_ROOT=/mnt/nvdl/datasets/joc-datasets/image/imagenet/uncompressed_train \
-              -e IMAGENET_VAL_ROOT=/mnt/nvdl/datasets/joc-datasets/image/imagenet/uncompressed_val \
-              -e HF_DIR=/tmp/datasets/huggingface \
-              -e PYT_DIR=/tmp/torch/cache \
-              -e SAVE_DIR=/checkpoint_dir \
+               -v datasets_dir/:datasets_dir \
+               -v checkpoint_dir:checkpoint_dir \
+               -v codebase:codebase \
+              -e TRANSFORMERS_CACHE=transformers_cache_dir \
+              -e IMAGENET_TRAIN_ROOT=imagenet_train_dir \
+              -e IMAGENET_VAL_ROOT=imagenet_val_dir \
+              -e HF_DIR=huggingface_datasets_cache_dir \
+              -e PYT_DIR=pytorch_hub_cachedir \
+              -e SAVE_DIR=checkpoint_save_dir \
              --network=host -ti --ipc=host multimodal:training 
 
 python train.py
