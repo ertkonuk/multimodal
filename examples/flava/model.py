@@ -61,19 +61,19 @@ class FLAVALightningModule(LightningModule):
         #losses = asdict(output.losses)        
         # added by tugrulkonuk: TODO: put this into a function
         losses = {
-                    'mmm_text_loss' : output.losses.mmm_text_loss,
-                    'mmm_image_loss' : output.losses.mmm_image_loss,
-                    'mim_loss' : output.losses.mim_loss,
-                    'mlm_loss' : output.losses.mlm_loss,
-                    'itm_loss' : output.losses.itm_loss,
-                    'global_contrastive_loss' : output.losses.global_contrastive_loss
+                    'mmm_text' : output.losses.mmm_text_loss,
+                    'mmm_image' : output.losses.mmm_image_loss,
+                    'mim' : output.losses.mim_loss,
+                    'mlm' : output.losses.mlm_loss,
+                    'itm' : output.losses.itm_loss,
+                    'global_CL' : output.losses.global_contrastive_loss
                  }
         
         total_loss = 0
         for key in losses:
             if losses[key] is not None:
                 total_loss += losses[key]
-                self.log(f"train/losses/{key}", losses[key], prog_bar=True, logger=True)
+                self.log(f"train/{key}", losses[key], prog_bar=True, logger=True)
 
         return total_loss
 
@@ -100,14 +100,17 @@ class FLAVALightningModule(LightningModule):
         else:
             raise RuntimeError("Batch needs to have either or both 'image' and 'text'.")
 
+        # print('Batch info:')
+        # for key in batch:
+        #     print(f'  {key}: {batch[key].shape}')
         output = self.model(
-            image=batch.get("image", None),
-            image_for_codebook=batch.get("image_for_codebook", None),
-            image_patches_mask=batch.get("image_patches_mask", None),
-            text=batch.get("text", None),
-            text_masked=batch.get("text_masked", None),
-            mlm_labels=batch.get("mlm_labels", None),
-            itm_labels=batch.get("itm_labels", None),
+            image=batch.get("image", None),  # bs x 3 x 224 x 224
+            image_for_codebook=batch.get("image_for_codebook", None),  # bs x 3 x 112 x 112
+            image_patches_mask=batch.get("image_patches_mask", None),  # bs x 14 x 14
+            text=batch.get("text", None),  # bs x 77
+            text_masked=batch.get("text_masked", None),  # bs x 77
+            mlm_labels=batch.get("mlm_labels", None),  # bs x 77
+            itm_labels=batch.get("itm_labels", None),  # bs
             required_embedding=required_embedding,
         )
         
