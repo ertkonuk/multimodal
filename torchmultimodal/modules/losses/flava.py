@@ -110,6 +110,7 @@ class ITMLoss(nn.Module):
         hidden_states: Tensor,
         labels: Tensor,
     ):
+        torch.cuda.nvtx.range_push("ITM-Loss")
         pooled_output = self.pooler(hidden_states)
         scores = self.cls(pooled_output)
 
@@ -117,6 +118,7 @@ class ITMLoss(nn.Module):
             scores.view(-1, 2),
             labels.view(-1),
         )
+        torch.cuda.nvtx.range_pop()
         return ITMLossOutput(logits=scores, loss=loss)
 
 
@@ -181,6 +183,7 @@ class MaskedPredictionLoss(nn.Module):
         self.ce_loss = nn.CrossEntropyLoss(ignore_index=ignore_index)
 
     def forward(self, hidden_states: Tensor, masked_labels: Tensor):
+        torch.cuda.nvtx.range_push("Masked-Prediction-loss")
         masked_tokens = masked_labels.ne(self.ignore_index)
 
         masked_labels = masked_labels[masked_tokens]
@@ -196,6 +199,7 @@ class MaskedPredictionLoss(nn.Module):
         if torch.isnan(masked_loss):
             warnings.warn("NaN detected in masked_loss. Replacing it with 0.")
             masked_loss = torch.nan_to_num(masked_loss, nan=0.0)
+        torch.cuda.nvtx.range_pop()
         return MaskedPredictionLossOutput(
             logits=prediction,
             loss=masked_loss,
@@ -234,6 +238,7 @@ class FLAVAGlobalContrastiveLoss(nn.Module):
         text_sequence: Tensor,
         mask: Tensor,
     ):
+        torch.cuda.nvtx.range_push("global-contrastive-loss")
         text_embedding = nn.functional.normalize(
             self.text_projection(text_sequence[:, self.text_embedding_index, :]), dim=-1
         )
@@ -252,7 +257,7 @@ class FLAVAGlobalContrastiveLoss(nn.Module):
             # Always true for FLAVA global contrastive loss
             backprop_in_gather=True,
         )
-
+        torch.cuda.nvtx.range_pop()
         return FLAVAGlobalContrastiveLossOutput(
             loss=output.loss,
             image_logits=output.image_logits,

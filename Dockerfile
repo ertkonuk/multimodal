@@ -24,12 +24,12 @@ RUN adduser ubuntu sudo
 RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 
 RUN mkdir /tmp/mm
-RUN chown -R ubuntu:ubuntu /tmp/mm
-RUN chown -R ubuntu:ubuntu /home/ubuntu/
+#RUN chown -R ubuntu:ubuntu /tmp/mm
+#RUN chown -R ubuntu:ubuntu /home/ubuntu/
 
-COPY --chown=ubuntu . /home/ubuntu/app
+#COPY --chown=ubuntu . /home/ubuntu/app
 
-USER ubuntu
+#USER ubuntu
 
 # Install all the basic packages 
 RUN pip3 install \
@@ -44,16 +44,16 @@ RUN pip3 install \
     datasets transformers 2>&1
 
 
-WORKDIR /home/ubuntu/app
+WORKDIR /workspace
 
 #RUN pip3 install -r /home/ubuntu/app/requirements.txt & pip3 install -r /home/ubuntu/app/examples/flava/requirements.txt 2>&1
-RUN pip3 install -r requirements.txt & pip3 install -r examples/flava/requirements.txt 2>&1
+#RUN pip3 install -r requirements.txt & pip3 install -r examples/flava/requirements.txt 2>&1
 
 #RUN sudo python3 setup.py install
-RUN pip3 install -e .
+#RUN pip3 install -e .
 
 
-WORKDIR /home/ubuntu/app/examples/flava
+#WORKDIR /home/ubuntu/app/examples/flava
 
 ENTRYPOINT ["/bin/bash"]
 

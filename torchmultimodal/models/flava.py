@@ -229,43 +229,52 @@ class FLAVAModel(nn.Module, PretrainedMixin):
                 required_embedding = "image"
             else:
                 required_embedding = "text"
-
+        torch.cuda.nvtx.range_push("encode-image")
         image_outputs = self._encode_data_to_embeddings(
             image,
             required_embedding,
             ["image", "mm"],
             self.encode_image,
         )
+        torch.cuda.nvtx.range_pop()
+        torch.cuda.nvtx.range_push("encode-text")
         text_outputs = self._encode_data_to_embeddings(
             text,
             required_embedding,
             ["text", "mm"],
             self.encode_text,
         )
+        torch.cuda.nvtx.range_pop()
+        torch.cuda.nvtx.range_push("encode-image-patches")
         image_masked_outputs = self._encode_data_to_embeddings(
             image,
             required_embedding,
             ["image", "mm"],
             partial(self.encode_image, image_patches_mask=image_patches_mask),
         )
+        torch.cuda.nvtx.range_pop()
+        torch.cuda.nvtx.range_push("encode-image-masked")
         text_masked_outputs = self._encode_data_to_embeddings(
             text_masked,
             required_embedding,
             ["text", "mm"],
             self.encode_text,
         )
+        torch.cuda.nvtx.range_pop()
 
         multimodal_outputs = TransformerOutput()
         multimodal_masked_outputs = TransformerOutput()
 
         if required_embedding == "mm":
+            torch.cuda.nvtx.range_push("Encode-Multimodal")
             multimodal_outputs = self.encode_mm(
                 image_outputs.last_hidden_state, text_outputs.last_hidden_state
             )
             multimodal_masked_outputs = self.encode_mm(
                 image_masked_outputs.last_hidden_state,
                 text_masked_outputs.last_hidden_state,
-            )            
+            )
+            torch.cuda.nvtx.range_pop()
 
         return FLAVAOutput(
             image=image_outputs,

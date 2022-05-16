@@ -18,6 +18,7 @@ from model import FLAVALightningModule
 from pytorch_lightning import Trainer, seed_everything
 from pytorch_lightning.callbacks import LearningRateMonitor
 import argumentparser
+from  pytorch_lightning.strategies import DDPFullyShardedStrategy
 
 args = argumentparser.get_training_arg_parser().parse_args()
 print('Training Arguments:')
@@ -104,6 +105,8 @@ def main():
     
     model = FLAVALightningModule()
     
+    manstrat = DDPFullyShardedStrategy(min_num_params=1e9)
+
     trainer = Trainer(
         default_root_dir=CHECKPT_DIR,
         num_sanity_val_steps=NUM_SANITY_VAL_STEPS,
@@ -114,11 +117,12 @@ def main():
             LearningRateMonitor(logging_interval="step"),
             MultimodalEvalCallback(imagenet_datamodule=imagenet_datamodule),
         ],
-        strategy=PARALLEL_STRATEGY,
+	strategy=PARALLEL_STRATEGY
+	#plugins="fsdp"
     )
-           
-    trainer.fit(model, datamodule=datamodule)
-    trainer.validate(model, datamodule=datamodule)
+    with torch.autograd.profiler.emit_nvtx():       
+        trainer.fit(model, datamodule=datamodule)
+    #trainer.validate(model, datamodule=datamodule)
 
 
 if __name__ == "__main__":

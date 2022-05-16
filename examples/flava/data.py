@@ -95,6 +95,7 @@ class MaskedImageModelingTransform:
         }
 
     def __call__(self, images: Union[List[Image.Image], Image.Image]):
+        torch.cuda.nvtx.range_push("MIM-Transform")
         if isinstance(images, list):
             output = {}
             for image in images:
@@ -103,9 +104,12 @@ class MaskedImageModelingTransform:
                     if key not in output:
                         output[key] = []
                     output[key].append(transformed_output[key])
+            torch.cuda.nvtx.range_pop()
             return output
         else:
-            return self.transform(images)
+            ret = self.transform(images)
+            torch.cuda.nvtx.range_pop()
+            return ret
 
 
 def default_image_pretraining_transforms():
@@ -377,6 +381,7 @@ class VLTransform:
         self.text_transform = text_transform
 
     def __call__(self, info, dataset, itm_probability):
+        torch.cuda.nvtx.range_push("VL-Transform")
         output = {}
         text = info["text"]
         image = info["image"]
@@ -390,6 +395,7 @@ class VLTransform:
 
         output.update(self.image_transform(image))
         output.update(self.text_transform(text))
+        torch.cuda.nvtx.range_pop()
         return output
 
 
@@ -738,6 +744,7 @@ class MultiDataLoader:
         Returns:
             SampleList: sample list instance from currently selected dataset
         """
+        torch.cuda.nvtx.range_pop("Multi-dataload-next")
         self.change_dataloader()
         try:
             next_batch = next(self.current_iterator)
@@ -746,6 +753,8 @@ class MultiDataLoader:
             self.iterators[self.current_index] = iterator
             self.current_iterator = iterator
             next_batch = next(self.current_iterator)
+            torch.cuda.nvtc.range_pop()
+        torch.cuda.nvtx.range_pop()
         return {"batch": next_batch, "datamodule_index": self.current_index}
 
     def change_dataloader(self):
